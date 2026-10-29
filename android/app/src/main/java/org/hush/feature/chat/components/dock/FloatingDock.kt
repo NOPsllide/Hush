@@ -12,6 +12,7 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
@@ -66,6 +67,7 @@ import org.hush.core.designsystem.ChatMessageTextIn
 import org.hush.core.designsystem.ChatOutBubble
 import org.hush.core.designsystem.ChatOutSentCheckRead
 import org.hush.core.designsystem.ChatsMessage
+import org.hush.core.designsystem.DockBorder
 import org.hush.core.designsystem.DockShape
 import org.hush.core.designsystem.WindowBackgroundWhite
 import org.hush.core.model.Message
@@ -104,7 +106,7 @@ fun FloatingDock(
             .fillMaxWidth()
             .imePadding()
             .navigationBarsPadding()
-            .padding(horizontal = 10.dp, vertical = 8.dp)
+            .padding(start = 14.dp, end = 14.dp, top = 4.dp, bottom = 12.dp)
     ) {
         AnimatedVisibility(
             visible = replyingMessage != null,
@@ -115,9 +117,10 @@ fun FloatingDock(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom = 6.dp, start = 4.dp, end = 58.dp)
+                        .padding(bottom = 6.dp, start = 4.dp, end = 56.dp)
                         .clip(RoundedCornerShape(14.dp))
                         .background(WindowBackgroundWhite)
+                        .border(1.dp, DockBorder, RoundedCornerShape(14.dp))
                         .padding(horizontal = 12.dp, vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -168,13 +171,14 @@ fun FloatingDock(
                     .weight(1f)
                     .heightIn(min = 50.dp)
                     .shadow(
-                        elevation = 4.dp,
+                        elevation = 3.dp,
                         shape = DockShape,
                         ambientColor = Color.Black.copy(alpha = 0.5f),
                         spotColor = Color.Black.copy(alpha = 0.5f)
                     )
                     .clip(DockShape)
                     .background(dockBrush)
+                    .border(1.dp, DockBorder, DockShape)
                     .padding(horizontal = 6.dp, vertical = 4.dp)
             ) {
                 Row(
@@ -251,7 +255,7 @@ fun FloatingDock(
                 }
             }
 
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(6.dp))
 
             Box {
                 Box(
