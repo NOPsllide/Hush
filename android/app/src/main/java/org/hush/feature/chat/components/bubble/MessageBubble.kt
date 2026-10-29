@@ -3,12 +3,9 @@ package org.hush.feature.chat.components.bubble
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,7 +13,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -24,10 +20,20 @@ import androidx.compose.material.icons.filled.DoneAll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.text.SimpleDateFormat
@@ -47,7 +53,7 @@ import org.hush.core.designsystem.getBubbleShape
 import org.hush.core.model.DeliveryStatus
 import org.hush.core.model.Message
 
-@OptIn(ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun MessageBubble(
     message: Message,
@@ -66,7 +72,7 @@ fun MessageBubble(
 
     val bubbleBg = if (isOutgoing) ChatOutBubble else ChatInBubble
     val textColor = if (isOutgoing) ChatMessageTextOut else ChatMessageTextIn
-    val timeColor = if (isOutgoing) ChatMessageTextOut.copy(alpha = 0.70f) else ChatsMessage
+    val timeColor = if (isOutgoing) ChatMessageTextOut.copy(alpha = 0.65f) else ChatsMessage
     val tickColor = ChatOutSentCheckRead
 
     val timeFormatter = SimpleDateFormat("HH:mm", Locale.getDefault())
@@ -82,14 +88,13 @@ fun MessageBubble(
 
         Box(
             modifier = Modifier
-                .widthIn(min = 40.dp, max = maxBubbleWidth)
                 .clip(bubbleShape)
                 .background(bubbleBg)
                 .combinedClickable(
                     onClick = onClick,
                     onLongClick = onLongClick
                 )
-                .padding(horizontal = 12.dp, vertical = 7.dp)
+                .padding(horizontal = 11.dp, vertical = 6.dp)
         ) {
             Column {
                 if (message.replyTo != null) {
@@ -131,70 +136,158 @@ fun MessageBubble(
                     Spacer(modifier = Modifier.height(4.dp))
                 }
 
-                FlowRow(
-                    horizontalArrangement = Arrangement.End,
-                    verticalArrangement = Arrangement.Bottom
-                ) {
-                    Text(
-                        text = message.content,
-                        color = textColor,
-                        fontSize = 15.5.sp,
-                        lineHeight = 21.sp,
-                        fontWeight = if (isOutgoing) FontWeight.Medium else FontWeight.Normal,
-                        modifier = Modifier.padding(end = 8.dp)
-                    )
+                TelegramStyleTextAndTime(
+                    content = message.content,
+                    formattedTime = formattedTime,
+                    isOutgoing = isOutgoing,
+                    status = message.status,
+                    textColor = textColor,
+                    timeColor = timeColor,
+                    tickColor = tickColor,
+                    maxBubbleWidth = maxBubbleWidth
+                )
+            }
+        }
+    }
+}
 
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(top = 2.dp)
-                    ) {
-                        Text(
-                            text = formattedTime,
-                            color = timeColor,
-                            fontSize = 10.5.sp,
-                            fontWeight = FontWeight.Normal
-                        )
+@Composable
+private fun TelegramStyleTextAndTime(
+    content: String,
+    formattedTime: String,
+    isOutgoing: Boolean,
+    status: DeliveryStatus,
+    textColor: Color,
+    timeColor: Color,
+    tickColor: Color,
+    maxBubbleWidth: Dp,
+    modifier: Modifier = Modifier
+) {
+    val density = LocalDensity.current
+    val textMeasurer = rememberTextMeasurer()
 
-                        if (isOutgoing) {
-                            Spacer(modifier = Modifier.width(3.dp))
-                            when (message.status) {
-                                DeliveryStatus.SENT -> {
-                                    Icon(
-                                        imageVector = Icons.Default.Check,
-                                        contentDescription = null,
-                                        tint = tickColor,
-                                        modifier = Modifier.size(12.dp)
-                                    )
-                                }
-                                DeliveryStatus.DELIVERED, DeliveryStatus.READ -> {
-                                    Icon(
-                                        imageVector = Icons.Default.DoneAll,
-                                        contentDescription = null,
-                                        tint = tickColor,
-                                        modifier = Modifier.size(13.dp)
-                                    )
-                                }
-                                DeliveryStatus.SENDING -> {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(7.dp)
-                                            .clip(RoundedCornerShape(3.5.dp))
-                                            .background(tickColor.copy(alpha = 0.5f))
-                                    )
-                                }
-                                DeliveryStatus.ERROR -> {
-                                    Text(
-                                        text = "!",
-                                        color = TextRedRegular,
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
-                            }
+    val textStyle = TextStyle(
+        fontFamily = FontFamily.Default,
+        fontWeight = if (isOutgoing) FontWeight.Medium else FontWeight.Normal,
+        fontSize = 15.5.sp,
+        lineHeight = 21.sp,
+        color = textColor
+    )
+
+    val maxBubbleWidthPx = with(density) { maxBubbleWidth.roundToPx() }
+
+    val textLayoutResult = remember(content, maxBubbleWidthPx) {
+        textMeasurer.measure(
+            text = AnnotatedString(content),
+            style = textStyle,
+            constraints = Constraints(maxWidth = maxBubbleWidthPx)
+        )
+    }
+
+    Layout(
+        content = {
+            Text(
+                text = content,
+                style = textStyle
+            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = formattedTime,
+                    color = timeColor,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Normal
+                )
+                if (isOutgoing) {
+                    Spacer(modifier = Modifier.width(3.dp))
+                    when (status) {
+                        DeliveryStatus.SENT -> {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = null,
+                                tint = tickColor,
+                                modifier = Modifier.size(15.5.dp)
+                            )
+                        }
+                        DeliveryStatus.DELIVERED, DeliveryStatus.READ -> {
+                            Icon(
+                                imageVector = Icons.Default.DoneAll,
+                                contentDescription = null,
+                                tint = tickColor,
+                                modifier = Modifier.size(16.5.dp)
+                            )
+                        }
+                        DeliveryStatus.SENDING -> {
+                            Box(
+                                modifier = Modifier
+                                    .size(8.dp)
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .background(tickColor.copy(alpha = 0.5f))
+                            )
+                        }
+                        DeliveryStatus.ERROR -> {
+                            Text(
+                                text = "!",
+                                color = TextRedRegular,
+                                fontSize = 12.5.sp,
+                                fontWeight = FontWeight.Bold
+                            )
                         }
                     }
                 }
             }
+        },
+        modifier = modifier
+    ) { measurables, constraints ->
+        val textPlaceable = measurables[0].measure(constraints.copy(minWidth = 0, maxWidth = maxBubbleWidthPx))
+        val timePlaceable = measurables[1].measure(Constraints())
+
+        val timeWidth = timePlaceable.width
+        val timeHeight = timePlaceable.height
+        val textWidth = textPlaceable.width
+        val textHeight = textPlaceable.height
+
+        val lineCount = textLayoutResult.lineCount
+        val lastLineWidth = if (lineCount > 0) textLayoutResult.getLineWidth(lineCount - 1) else textWidth.toFloat()
+        val spacing = 8.dp.roundToPx()
+
+        val canFitOnLastLine: Boolean
+        val totalWidth: Int
+        val totalHeight: Int
+
+        if (lineCount <= 1) {
+            val singleLineWidth = (lastLineWidth + spacing + timeWidth).toInt()
+            if (singleLineWidth <= maxBubbleWidthPx) {
+                canFitOnLastLine = true
+                totalWidth = singleLineWidth
+                totalHeight = maxOf(textHeight, timeHeight)
+            } else {
+                canFitOnLastLine = false
+                totalWidth = textWidth
+                totalHeight = textHeight + timeHeight
+            }
+        } else {
+            val remainingSpace = textWidth - lastLineWidth
+            if (remainingSpace >= timeWidth + spacing) {
+                canFitOnLastLine = true
+                totalWidth = textWidth
+                totalHeight = textHeight
+            } else {
+                canFitOnLastLine = false
+                val extendedWidth = (lastLineWidth + spacing + timeWidth).toInt().coerceAtMost(maxBubbleWidthPx)
+                totalWidth = maxOf(textWidth, extendedWidth)
+                totalHeight = textHeight + timeHeight
+            }
+        }
+
+        layout(totalWidth, totalHeight) {
+            textPlaceable.placeRelative(0, 0)
+            val timeY = totalHeight - timeHeight
+            timePlaceable.placeRelative(
+                x = totalWidth - timeWidth,
+                y = timeY
+            )
         }
     }
 }

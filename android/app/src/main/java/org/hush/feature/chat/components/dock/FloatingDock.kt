@@ -2,12 +2,16 @@ package org.hush.feature.chat.components.dock
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
@@ -22,7 +26,6 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
@@ -34,6 +37,7 @@ import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.SentimentSatisfiedAlt
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -47,6 +51,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
@@ -56,8 +63,8 @@ import androidx.compose.ui.unit.sp
 import org.hush.R
 import org.hush.core.designsystem.ChatInReplyLine
 import org.hush.core.designsystem.ChatMessageTextIn
-import org.hush.core.designsystem.ChatMessageTextOut
 import org.hush.core.designsystem.ChatOutBubble
+import org.hush.core.designsystem.ChatOutSentCheckRead
 import org.hush.core.designsystem.ChatsMessage
 import org.hush.core.designsystem.DockShape
 import org.hush.core.designsystem.WindowBackgroundWhite
@@ -73,12 +80,24 @@ fun FloatingDock(
     onSendBurnClick: () -> Unit,
     onSendScheduleClick: () -> Unit,
     onMicClick: () -> Unit,
+    onEmojiClick: () -> Unit,
     replyingMessage: Message?,
     onDismissReply: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var showOmniMenu by remember { mutableStateOf(false) }
     var showStealthMenu by remember { mutableStateOf(false) }
+
+    val hasText = text.isNotBlank()
+
+    val dockBrush = remember {
+        Brush.verticalGradient(
+            colors = listOf(
+                Color(0xFF252428),
+                WindowBackgroundWhite
+            )
+        )
+    }
 
     Column(
         modifier = modifier
@@ -96,7 +115,7 @@ fun FloatingDock(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom = 6.dp, start = 4.dp, end = 52.dp)
+                        .padding(bottom = 6.dp, start = 4.dp, end = 58.dp)
                         .clip(RoundedCornerShape(14.dp))
                         .background(WindowBackgroundWhite)
                         .padding(horizontal = 12.dp, vertical = 6.dp),
@@ -142,30 +161,53 @@ fun FloatingDock(
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.Bottom
         ) {
             Box(
                 modifier = Modifier
                     .weight(1f)
+                    .heightIn(min = 50.dp)
+                    .shadow(
+                        elevation = 4.dp,
+                        shape = DockShape,
+                        ambientColor = Color.Black.copy(alpha = 0.5f),
+                        spotColor = Color.Black.copy(alpha = 0.5f)
+                    )
                     .clip(DockShape)
-                    .background(WindowBackgroundWhite)
-                    .padding(horizontal = 12.dp, vertical = 5.dp)
+                    .background(dockBrush)
+                    .padding(horizontal = 6.dp, vertical = 4.dp)
             ) {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.CenterStart),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    IconButton(
+                        onClick = onEmojiClick,
+                        modifier = Modifier.size(38.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.SentimentSatisfiedAlt,
+                            contentDescription = stringResource(R.string.chat_emoji),
+                            tint = ChatsMessage,
+                            modifier = Modifier.size(23.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(2.dp))
+
                     Box(
                         modifier = Modifier
                             .weight(1f)
-                            .heightIn(min = 36.dp, max = 120.dp),
+                            .heightIn(min = 38.dp, max = 120.dp),
                         contentAlignment = Alignment.CenterStart
                     ) {
                         if (text.isEmpty()) {
                             Text(
                                 text = stringResource(R.string.chat_input_hint),
                                 color = ChatsMessage,
-                                fontSize = 14.5.sp
+                                fontSize = 15.sp
                             )
                         }
                         BasicTextField(
@@ -183,75 +225,26 @@ fun FloatingDock(
                         )
                     }
 
-                    Spacer(modifier = Modifier.width(6.dp))
-
-                    Box {
-                        AnimatedContent(
-                            targetState = text.isNotBlank(),
-                            transitionSpec = { fadeIn() togetherWith fadeOut() },
-                            label = "SendMicMorph"
-                        ) { hasText ->
-                            if (hasText) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(36.dp)
-                                        .clip(CircleShape)
-                                        .background(ChatOutBubble)
-                                        .combinedClickable(
-                                            interactionSource = remember { MutableInteractionSource() },
-                                            indication = null,
-                                            onClick = onSendClick,
-                                            onLongClick = { showStealthMenu = true }
-                                        ),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.AutoMirrored.Filled.Send,
-                                        contentDescription = stringResource(R.string.chat_send),
-                                        tint = ChatMessageTextOut,
-                                        modifier = Modifier.size(17.dp)
-                                    )
-                                }
-                            } else {
-                                IconButton(
-                                    onClick = onMicClick,
-                                    modifier = Modifier.size(36.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Mic,
-                                        contentDescription = stringResource(R.string.chat_mic),
-                                        tint = ChatsMessage,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                }
-                            }
-                        }
-
-                        DropdownMenu(
-                            expanded = showStealthMenu,
-                            onDismissRequest = { showStealthMenu = false },
-                            modifier = Modifier.background(WindowBackgroundWhite)
+                    AnimatedVisibility(
+                        visible = !hasText,
+                        enter = fadeIn(animationSpec = spring()) + slideInHorizontally(
+                            initialOffsetX = { it },
+                            animationSpec = spring()
+                        ),
+                        exit = fadeOut(animationSpec = spring()) + slideOutHorizontally(
+                            targetOffsetX = { it },
+                            animationSpec = spring()
+                        )
+                    ) {
+                        IconButton(
+                            onClick = onMicClick,
+                            modifier = Modifier.size(38.dp)
                         ) {
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.chat_action_send_silently), color = ChatMessageTextIn, fontSize = 13.5.sp) },
-                                onClick = {
-                                    showStealthMenu = false
-                                    onSendSilentClick()
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.chat_action_burn_after_reading), color = ChatOutBubble, fontSize = 13.5.sp) },
-                                onClick = {
-                                    showStealthMenu = false
-                                    onSendBurnClick()
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.chat_action_schedule), color = ChatMessageTextIn, fontSize = 13.5.sp) },
-                                onClick = {
-                                    showStealthMenu = false
-                                    onSendScheduleClick()
-                                }
+                            Icon(
+                                imageVector = Icons.Default.Mic,
+                                contentDescription = stringResource(R.string.chat_mic),
+                                tint = ChatsMessage,
+                                modifier = Modifier.size(22.dp)
                             )
                         }
                     }
@@ -263,18 +256,57 @@ fun FloatingDock(
             Box {
                 Box(
                     modifier = Modifier
-                        .size(46.dp)
-                        .clip(CircleShape)
-                        .background(WindowBackgroundWhite)
-                        .clickable { showOmniMenu = !showOmniMenu },
+                        .size(50.dp)
+                        .shadow(
+                            elevation = 3.dp,
+                            shape = RoundedCornerShape(16.dp),
+                            ambientColor = Color.Black.copy(alpha = 0.4f),
+                            spotColor = Color.Black.copy(alpha = 0.4f)
+                        )
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(ChatOutBubble)
+                        .combinedClickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = {
+                                if (hasText) {
+                                    onSendClick()
+                                } else {
+                                    showOmniMenu = !showOmniMenu
+                                }
+                            },
+                            onLongClick = {
+                                if (hasText) {
+                                    showStealthMenu = true
+                                }
+                            }
+                        ),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = stringResource(R.string.chat_attach),
-                        tint = ChatOutBubble,
-                        modifier = Modifier.size(22.dp)
-                    )
+                    AnimatedContent(
+                        targetState = hasText,
+                        transitionSpec = {
+                            (scaleIn(animationSpec = spring()) + fadeIn(animationSpec = spring())) togetherWith
+                                    (scaleOut(animationSpec = spring()) + fadeOut(animationSpec = spring()))
+                        },
+                        label = "ActionIconMorph"
+                    ) { isTyping ->
+                        if (isTyping) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.Send,
+                                contentDescription = stringResource(R.string.chat_send),
+                                tint = ChatOutSentCheckRead,
+                                modifier = Modifier.size(21.dp)
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = stringResource(R.string.chat_attach),
+                                tint = ChatOutSentCheckRead,
+                                modifier = Modifier.size(23.dp)
+                            )
+                        }
+                    }
                 }
 
                 DropdownMenu(
@@ -301,6 +333,34 @@ fun FloatingDock(
                         icon = Icons.Default.LocationOn,
                         text = stringResource(R.string.chat_omni_location),
                         onClick = { showOmniMenu = false }
+                    )
+                }
+
+                DropdownMenu(
+                    expanded = showStealthMenu,
+                    onDismissRequest = { showStealthMenu = false },
+                    modifier = Modifier.background(WindowBackgroundWhite)
+                ) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.chat_action_send_silently), color = ChatMessageTextIn, fontSize = 13.5.sp) },
+                        onClick = {
+                            showStealthMenu = false
+                            onSendSilentClick()
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.chat_action_burn_after_reading), color = ChatOutBubble, fontSize = 13.5.sp) },
+                        onClick = {
+                            showStealthMenu = false
+                            onSendBurnClick()
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.chat_action_schedule), color = ChatMessageTextIn, fontSize = 13.5.sp) },
+                        onClick = {
+                            showStealthMenu = false
+                            onSendScheduleClick()
+                        }
                     )
                 }
             }

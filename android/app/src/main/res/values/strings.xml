@@ -22,4 +22,5 @@
     <string name="chat_send">Send</string>
     <string name="chat_mic">Voice Note</string>
     <string name="chat_attach">Attach</string>
+    <string name="chat_emoji">Emoji</string>
 </resources>

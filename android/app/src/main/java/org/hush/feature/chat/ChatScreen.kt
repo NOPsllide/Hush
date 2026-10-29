@@ -55,6 +55,7 @@ fun ChatScreen(
             onSendBurnClick = { viewModel.sendMessage(isBurnOnRead = true) },
             onSendScheduleClick = {},
             onMicClick = {},
+            onEmojiClick = {},
             replyingMessage = uiState.replyingToMessage,
             onDismissReply = viewModel::clearReply,
             modifier = Modifier.align(Alignment.BottomCenter)
