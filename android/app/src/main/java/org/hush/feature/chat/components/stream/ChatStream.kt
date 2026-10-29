@@ -1,7 +1,6 @@
 package org.hush.feature.chat.components.stream
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -24,7 +23,6 @@ import org.hush.R
 import org.hush.core.designsystem.ChatServiceBackground
 import org.hush.core.designsystem.ChatServiceText
 import org.hush.core.designsystem.DateBadgeShape
-import org.hush.core.designsystem.DockBorder
 import org.hush.core.model.Message
 import org.hush.feature.chat.components.bubble.MessageBubble
 
@@ -38,7 +36,7 @@ fun ChatStream(
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         reverseLayout = true,
-        contentPadding = PaddingValues(top = 70.dp, bottom = 76.dp)
+        contentPadding = PaddingValues(top = 76.dp, bottom = 80.dp)
     ) {
         itemsIndexed(
             items = messages,
@@ -86,7 +84,6 @@ fun DateSeparatorBadge(
             modifier = Modifier
                 .clip(DateBadgeShape)
                 .background(ChatServiceBackground)
-                .border(0.5.dp, DockBorder, DateBadgeShape)
                 .padding(horizontal = 10.dp, vertical = 3.dp)
         ) {
             Text(

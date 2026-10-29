@@ -1,14 +1,7 @@
 <resources>
     <string name="app_name">Hush</string>
-    <string name="chat_input_hint">Whisper an encrypted thought…</string>
-    <string name="chat_status_encrypted">PQ-Kyber768 · Active</string>
-    <string name="chat_burn_timer_24h">24h</string>
-    <string name="chat_burn_timer_title">Self-Destruct Timer</string>
-    <string name="chat_burn_timer_off">Off</string>
-    <string name="chat_burn_timer_10s">10 seconds</string>
-    <string name="chat_burn_timer_1m">1 minute</string>
-    <string name="chat_burn_timer_1h">1 hour</string>
-    <string name="chat_burn_timer_24h_desc">24 hours</string>
+    <string name="chat_input_hint">Message…</string>
+    <string name="chat_status_online">online</string>
     <string name="chat_action_send_silently">Send Silently</string>
     <string name="chat_action_burn_after_reading">Burn After Reading</string>
     <string name="chat_action_schedule">Schedule Whisper</string>
