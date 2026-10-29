@@ -249,7 +249,11 @@ private fun TelegramStyleTextAndTime(
         val textHeight = textPlaceable.height
 
         val lineCount = textLayoutResult.lineCount
-        val lastLineWidth = if (lineCount > 0) textLayoutResult.getLineWidth(lineCount - 1) else textWidth.toFloat()
+        val lastLineWidth = if (lineCount > 0) {
+            textLayoutResult.getLineRight(lineCount - 1) - textLayoutResult.getLineLeft(lineCount - 1)
+        } else {
+            textWidth.toFloat()
+        }
         val spacing = 8.dp.roundToPx()
 
         val canFitOnLastLine: Boolean
