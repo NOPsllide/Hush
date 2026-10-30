@@ -1,15 +1,13 @@
 package org.hush.feature.chat.components.dock
 
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -56,8 +54,11 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -91,6 +92,15 @@ fun FloatingDock(
     var showStealthMenu by remember { mutableStateOf(false) }
 
     val hasText = text.isNotBlank()
+    val density = LocalDensity.current
+
+    val telegramEasing = remember { CubicBezierEasing(0.22f, 1f, 0.36f, 1f) }
+
+    val appearProgress by animateFloatAsState(
+        targetValue = if (hasText) 1f else 0f,
+        animationSpec = tween(durationMillis = 320, easing = telegramEasing),
+        label = "SendButtonAppear"
+    )
 
     val dockBrush = remember {
         Brush.verticalGradient(
@@ -106,18 +116,18 @@ fun FloatingDock(
             .fillMaxWidth()
             .imePadding()
             .navigationBarsPadding()
-            .padding(start = 14.dp, end = 14.dp, top = 4.dp, bottom = 12.dp)
+            .padding(start = 7.dp, end = 7.dp, top = 4.dp, bottom = 9.dp)
     ) {
         AnimatedVisibility(
             visible = replyingMessage != null,
-            enter = fadeIn(),
-            exit = fadeOut()
+            enter = fadeIn(animationSpec = tween(200, easing = telegramEasing)),
+            exit = fadeOut(animationSpec = tween(150, easing = telegramEasing))
         ) {
             if (replyingMessage != null) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom = 6.dp, start = 4.dp, end = 56.dp)
+                        .padding(bottom = 6.dp, start = 4.dp, end = 54.dp)
                         .clip(RoundedCornerShape(14.dp))
                         .background(WindowBackgroundWhite)
                         .border(1.dp, DockBorder, RoundedCornerShape(14.dp))
@@ -169,7 +179,7 @@ fun FloatingDock(
             Box(
                 modifier = Modifier
                     .weight(1f)
-                    .heightIn(min = 50.dp)
+                    .heightIn(min = 48.dp)
                     .shadow(
                         elevation = 3.dp,
                         shape = DockShape,
@@ -179,7 +189,7 @@ fun FloatingDock(
                     .clip(DockShape)
                     .background(dockBrush)
                     .border(1.dp, DockBorder, DockShape)
-                    .padding(horizontal = 6.dp, vertical = 4.dp)
+                    .padding(horizontal = 4.dp, vertical = 2.dp)
             ) {
                 Row(
                     modifier = Modifier
@@ -189,29 +199,36 @@ fun FloatingDock(
                 ) {
                     IconButton(
                         onClick = onEmojiClick,
-                        modifier = Modifier.size(38.dp)
+                        modifier = Modifier
+                            .size(44.dp)
+                            .padding(start = 2.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.SentimentSatisfiedAlt,
                             contentDescription = stringResource(R.string.chat_emoji),
                             tint = ChatsMessage,
-                            modifier = Modifier.size(23.dp)
+                            modifier = Modifier.size(24.dp)
                         )
                     }
 
-                    Spacer(modifier = Modifier.width(2.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
 
                     Box(
                         modifier = Modifier
                             .weight(1f)
-                            .heightIn(min = 38.dp, max = 120.dp),
+                            .heightIn(min = 36.dp, max = 130.dp),
                         contentAlignment = Alignment.CenterStart
                     ) {
                         if (text.isEmpty()) {
                             Text(
                                 text = stringResource(R.string.chat_input_hint),
                                 color = ChatsMessage,
-                                fontSize = 15.sp
+                                fontSize = 17.5.sp,
+                                style = TextStyle(
+                                    platformStyle = PlatformTextStyle(
+                                        includeFontPadding = false
+                                    )
+                                )
                             )
                         }
                         BasicTextField(
@@ -219,36 +236,37 @@ fun FloatingDock(
                             onValueChange = onTextChange,
                             textStyle = TextStyle(
                                 color = ChatMessageTextIn,
-                                fontSize = 15.sp,
-                                lineHeight = 20.sp
+                                fontSize = 17.5.sp,
+                                lineHeight = 22.sp,
+                                platformStyle = PlatformTextStyle(
+                                    includeFontPadding = false
+                                )
                             ),
                             cursorBrush = SolidColor(ChatOutBubble),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 4.dp)
+                                .padding(vertical = 9.dp)
                         )
                     }
 
                     AnimatedVisibility(
                         visible = !hasText,
-                        enter = fadeIn(animationSpec = spring()) + slideInHorizontally(
-                            initialOffsetX = { it },
-                            animationSpec = spring()
-                        ),
-                        exit = fadeOut(animationSpec = spring()) + slideOutHorizontally(
-                            targetOffsetX = { it },
-                            animationSpec = spring()
-                        )
+                        enter = fadeIn(animationSpec = tween(220, easing = telegramEasing)) +
+                                scaleIn(initialScale = 0.1f, animationSpec = tween(220, easing = telegramEasing)),
+                        exit = fadeOut(animationSpec = tween(220, easing = telegramEasing)) +
+                                scaleOut(targetScale = 0.1f, animationSpec = tween(220, easing = telegramEasing))
                     ) {
                         IconButton(
                             onClick = onMicClick,
-                            modifier = Modifier.size(38.dp)
+                            modifier = Modifier
+                                .size(44.dp)
+                                .padding(end = 2.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Mic,
                                 contentDescription = stringResource(R.string.chat_mic),
                                 tint = ChatsMessage,
-                                modifier = Modifier.size(22.dp)
+                                modifier = Modifier.size(23.dp)
                             )
                         }
                     }
@@ -260,7 +278,7 @@ fun FloatingDock(
             Box {
                 Box(
                     modifier = Modifier
-                        .size(50.dp)
+                        .size(48.dp)
                         .shadow(
                             elevation = 3.dp,
                             shape = RoundedCornerShape(16.dp),
@@ -287,30 +305,38 @@ fun FloatingDock(
                         ),
                     contentAlignment = Alignment.Center
                 ) {
-                    AnimatedContent(
-                        targetState = hasText,
-                        transitionSpec = {
-                            (scaleIn(animationSpec = spring()) + fadeIn(animationSpec = spring())) togetherWith
-                                    (scaleOut(animationSpec = spring()) + fadeOut(animationSpec = spring()))
-                        },
-                        label = "ActionIconMorph"
-                    ) { isTyping ->
-                        if (isTyping) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.Send,
-                                contentDescription = stringResource(R.string.chat_send),
-                                tint = ChatOutSentCheckRead,
-                                modifier = Modifier.size(21.dp)
-                            )
-                        } else {
-                            Icon(
-                                imageVector = Icons.Default.Add,
-                                contentDescription = stringResource(R.string.chat_attach),
-                                tint = ChatOutSentCheckRead,
-                                modifier = Modifier.size(23.dp)
-                            )
-                        }
-                    }
+                    val translationPx = with(density) { 24.dp.toPx() }
+
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = stringResource(R.string.chat_attach),
+                        tint = ChatOutSentCheckRead,
+                        modifier = Modifier
+                            .size(24.dp)
+                            .graphicsLayer {
+                                val factor = (1f - appearProgress).coerceIn(0f, 1f)
+                                scaleX = factor
+                                scaleY = factor
+                                alpha = factor
+                            }
+                    )
+
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.Send,
+                        contentDescription = stringResource(R.string.chat_send),
+                        tint = ChatOutSentCheckRead,
+                        modifier = Modifier
+                            .size(21.dp)
+                            .graphicsLayer {
+                                translationX = -translationPx * (1f - appearProgress)
+                                translationY = translationPx * (1f - appearProgress)
+                                val currentScale = 0.35f + 0.65f * appearProgress
+                                scaleX = currentScale
+                                scaleY = currentScale
+                                rotationZ = 60f * (1f - appearProgress)
+                                alpha = appearProgress
+                            }
+                    )
                 }
 
                 DropdownMenu(

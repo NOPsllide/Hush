@@ -3,7 +3,7 @@ package org.hush.core.designsystem
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.unit.dp
 
-val DockShape = RoundedCornerShape(26.dp)
+val DockShape = RoundedCornerShape(22.dp)
 val DateBadgeShape = RoundedCornerShape(12.dp)
 val TopBarPillShape = RoundedCornerShape(20.dp)
 val ReactionPillShape = RoundedCornerShape(16.dp)
